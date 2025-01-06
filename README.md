@@ -75,3 +75,23 @@ Output: 2.50000
 Explanation: merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5.
 
 ```
+### Question 5: Longest Palindrome Substring
+Given a string s, return the longest
+palindromic substring in s.
+```
+Example 1:
+
+Input: s = "babad"
+Output: "bab"
+Explanation: "aba" is also a valid answer.
+Example 2:
+
+Input: s = "cbbd"
+Output: "bb"
+
+
+Constraints:
+
+1 <= s.length <= 1000
+s consist of only digits and English letters.
+```
