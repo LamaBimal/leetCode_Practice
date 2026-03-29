@@ -22,7 +22,13 @@
 13. [Matrix Traversal](#13-matrix-traversal)
 14. [Backtracking](#14-backtracking)
 15. [Dynamic Programming (DP)](#15-dynamic-programming-dp)
-16. [✅ Final Tips](#✅-final-tips)
+16. [SOLID Principles](#16-solid-principles)
+17. [Composition over Inheritance](#17-composition-over-inheritance)
+18. [DRY Principle](#18-dry-principle)
+19. [KISS Principle](#19-kiss-principle)
+20. [Encapsulation](#20-encapsulation)
+21. [Fail Fast](#21-fail-fast)
+22. [✅ Final Tips](#✅-final-tips)
 
 ---
 
@@ -260,6 +266,228 @@ dp[0] = 0; dp[1] = 1;
 for(int i=2; i<=n; i++) dp[i] = dp[i-1] + dp[i-2];
 
 ```
+
+---
+
+## 16. SOLID Principles
+
+Design principles for writing maintainable, extensible object-oriented code.
+
+### S — Single Responsibility Principle (SRP)
+**Rule:** A class should have only one reason to change.
+
+**Bad:** One class that parses an order AND sends a notification email.  
+**Good:** Split into separate classes, each with a single concern.
+
+```java
+// Handles only order data
+class Order {
+    private final int id;
+    private final double total;
+    // getters...
+}
+
+// Handles only notification logic
+class OrderNotifier {
+    public String notify(Order order) {
+        return "Order #" + order.getId() + " confirmed. Total: $" + order.getTotal();
+    }
+}
+```
+
+### O — Open/Closed Principle (OCP)
+**Rule:** Classes should be open for extension, but closed for modification.
+
+**Bad:** Adding a new shape requires editing existing switch/if logic.  
+**Good:** Each shape implements an interface; new shapes extend without touching existing code.
+
+```java
+interface Shape { double area(); }
+
+class Circle implements Shape {
+    public double area() { return Math.PI * radius * radius; }
+}
+
+// Adding Triangle requires NO changes to existing classes
+class Triangle implements Shape {
+    public double area() { return 0.5 * base * height; }
+}
+```
+
+### L — Liskov Substitution Principle (LSP)
+**Rule:** Subtypes must be substitutable for their base types without altering correctness.
+
+**Bad:** `Square extends Rectangle` — overriding `setWidth`/`setHeight` breaks `Rectangle`'s contract.  
+**Good:** Both `Square` and `Rectangle` implement a common `Shape` interface independently.
+
+```java
+interface Shape { double area(); }
+
+class Rectangle implements Shape {
+    public double area() { return width * height; }
+}
+
+// Square does NOT extend Rectangle — avoids the classic LSP violation
+class Square implements Shape {
+    public double area() { return side * side; }
+}
+
+// Works correctly with any Shape — LSP satisfied
+double computeArea(Shape shape) { return shape.area(); }
+```
+
+> More SOLID principles (I, D) to be added as implemented.
+
+---
+
+## 17. Composition over Inheritance
+
+**Rule:** Favor composing behavior via interfaces/delegation over deep inheritance chains.
+
+**Bad:** `Bird → FlyingBird → SwimmingFlyingBird` — hierarchy explodes with combinations.  
+**Good:** Compose a `Bird` with optional `Flyable` / `Swimmable` behaviors injected at construction.
+
+```java
+interface Flyable  { String fly(); }
+interface Swimmable { String swim(); }
+
+class Bird {
+    private final Flyable flyable;
+    private final Swimmable swimmable;
+    // behaviors injected — no inheritance needed
+}
+
+// Eagle flies, doesn't swim
+new Bird("Eagle", new CanFly(), null);
+
+// Duck flies and swims
+new Bird("Duck", new CanFly(), new CanSwim());
+
+// Penguin swims, doesn't fly
+new Bird("Penguin", null, new CanSwim());
+```
+
+---
+
+## 18. DRY Principle
+
+**Rule:** Every piece of knowledge should have a single, unambiguous representation in the system.
+
+**Bad:** Discount logic copy-pasted across multiple methods — change it in one place and forget the others.  
+**Good:** Extract into one shared method — change it once, applies everywhere.
+
+```java
+// BAD: duplicated logic
+public double priceForGold(double price)   { return price - (price * 0.20); }
+public double priceForSilver(double price) { return price - (price * 0.20); }
+
+// GOOD: single source of truth
+public double applyDiscount(double price, double rate) { return price - (price * rate); }
+public double goldPrice(double price)   { return applyDiscount(price, 0.20); }
+public double silverPrice(double price) { return applyDiscount(price, 0.10); }
+```
+
+---
+
+## 19. KISS Principle
+
+**Rule:** Keep It Simple, Stupid — prefer the simplest solution that works. Avoid over-engineering.
+
+**Bad:** Using a stream pipeline with multiple steps just to check if a number is even.
+**Good:** A single, readable condition.
+
+```java
+// BAD: unnecessarily complex
+public boolean isEvenComplex(int n) {
+    return IntStream.of(n).filter(x -> x % 2 == 0).findFirst().isPresent();
+}
+
+// GOOD: simple and obvious
+public boolean isEven(int n) { return n % 2 == 0; }
+
+// GOOD: clear intent
+public int max(int[] nums) {
+    return Arrays.stream(nums).max().orElseThrow();
+}
+```
+
+---
+
+## 20. Encapsulation
+
+**Rule:** Expose only what is necessary; hide internal implementation details behind a controlled interface.
+
+**Bad:** Public fields let anyone mutate state directly, bypassing invariants.  
+**Good:** Private fields with accessor methods that enforce rules in one place.
+
+```java
+// BAD: no protection — anyone can set temperature to -9999
+class ThermometerBad {
+    public double temperature;
+}
+
+// GOOD: invariant enforced in the setter
+class Thermometer {
+    private static final double MIN = -273.15; // absolute zero
+    private double temperature;
+
+    public Thermometer(double temperature) { setTemperature(temperature); }
+
+    public double getTemperature() { return temperature; }
+
+    public void setTemperature(double temperature) {
+        if (temperature < MIN)
+            throw new IllegalArgumentException("Temperature below absolute zero");
+        this.temperature = temperature;
+    }
+
+    public String unit() { return "Celsius"; }
+}
+```
+
+---
+
+## 21. Fail Fast
+
+**Rule:** Validate inputs and surface errors as early as possible. Don't let bad state silently propagate through the system.
+
+**Bad:** Accept null/invalid input, produce wrong results later.
+**Good:** Throw immediately at the boundary so the caller knows right away.
+
+```java
+// BAD: silent failure — negative balance accepted, bugs surface later
+class BankAccountBad {
+    private double balance;
+    public BankAccountBad(double balance) { this.balance = balance; }
+}
+
+// GOOD: fail at construction and at every operation boundary
+class BankAccount {
+    private double balance;
+
+    public BankAccount(double initialBalance) {
+        if (initialBalance < 0)
+            throw new IllegalArgumentException("Initial balance cannot be negative");
+        this.balance = initialBalance;
+    }
+
+    public void deposit(double amount) {
+        if (amount <= 0)
+            throw new IllegalArgumentException("Deposit amount must be positive");
+        balance += amount;
+    }
+
+    public void withdraw(double amount) {
+        if (amount <= 0)
+            throw new IllegalArgumentException("Withdrawal amount must be positive");
+        if (amount > balance)
+            throw new IllegalStateException("Insufficient funds");
+        balance -= amount;
+    }
+}
+```
+
+---
 
 ✅ Final Tips
 
